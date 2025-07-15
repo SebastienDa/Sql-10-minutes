@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plateforme d'Apprentissage SQL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror for SQL syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-darker.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
+    
+    <!-- AlaSQL for in-browser SQL execution -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alasql/4.1.2/alasql.min.js"></script>
+    
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .main-nav-link { @apply px-4 py-3 font-semibold text-gray-600 hover:bg-gray-100 hover:text-blue-600 rounded-md transition-colors; }
+        .main-nav-link.active { @apply bg-blue-100 text-blue-700; }
+        .page-content { @apply hidden; }
+        .page-content.active { @apply block; }
+        .CodeMirror { border: 1px solid #d1d5db; height: 300px; font-family: 'Source Code Pro', monospace; font-size: 14px; border-radius: 0.5rem; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="container mx-auto px-4 md:px-6">
+            <nav class="flex items-center justify-between h-16">
+                <div class="text-xl font-bold text-blue-600">
+                    SQL Learning Hub
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="main-nav-link active" data-page="sandbox">Exécuteur SQL</button>
+                    <button class="main-nav-link" data-page="quiz">Quiz</button>
+                    <button class="main-nav-link" data-page="recap">Fiche Récap</button>
+                    <a href="https://linktr.ee/sebastiendaviotformations" target="_blank" class="main-nav-link bg-emerald-500 text-white hover:bg-emerald-600 hover:text-white">Formation Complète 🎓</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-6">
+        
+        <!-- Page 1: SQL Sandbox -->
+        <div id="sandbox" class="page-content active">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1">
+                        <h2 class="text-xl font-bold mb-4">Schéma de la Base</h2>
+                        <div class="space-y-4 bg-gray-50 p-4 rounded-lg border">
+                            <div>
+                                <h3 class="font-semibold text-blue-700">Campagnes_Marketing</h3>
+                                <ul class="list-disc list-inside mt-2 text-gray-600 text-sm pl-2">
+                                    <li><strong>ID_Campagne</strong> (PK)</li>
+                                    <li><strong>Nom_Campagne</strong></li>
+                                    <li><strong>Plateforme</strong></li>
+                                    <li><strong>Type_Campagne</strong></li>
+                                    <li><strong>Cout_Total</strong></li>
+                                    <li><strong>Conversions</strong></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-blue-700">Details_Conversions</h3>
+                                <ul class="list-disc list-inside mt-2 text-gray-600 text-sm pl-2">
+                                     <li><strong>ID_Conversion</strong> (PK)</li>
+                                     <li><strong>ID_Campagne</strong> (FK)</li>
+                                     <li><strong>Produit_Vendu</strong></li>
+                                     <li><strong>Revenu</strong></li>
+                                </ul>
+                            </div>
+                        </div>
+                         <div class="mt-4">
+                            <h3 class="text-lg font-bold mb-2">Requêtes d'exemple</h3>
+                             <button class="example-query-btn text-left text-sm text-blue-600 hover:underline w-full p-2 rounded hover:bg-gray-100">Voir les 10 premières campagnes</button>
+                             <button class="example-query-btn text-left text-sm text-blue-600 hover:underline w-full p-2 rounded hover:bg-gray-100 mt-1">Calculer le coût total par plateforme</button>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2">
+                        <h2 class="text-xl font-bold mb-4">Éditeur de Requêtes</h2>
+                        <textarea id="sql-editor"></textarea>
+                        <button id="execute-button" class="mt-4 w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                            Exécuter la requête
+                        </button>
+                        <h2 class="text-xl font-bold mt-6 mb-4">Résultats</h2>
+                        <div id="results-container" class="overflow-x-auto border rounded-lg p-2 min-h-[100px] bg-gray-50">
+                            <p class="text-gray-500">Les résultats s'afficheront ici.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 2: Quiz -->
+        <div id="quiz" class="page-content">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-6 text-center">Testez vos connaissances</h2>
+                <form id="quiz-form" class="space-y-8 max-w-4xl mx-auto"></form>
+                <div class="mt-8 flex justify-between items-center border-t pt-6 max-w-4xl mx-auto">
+                    <button id="submit-quiz" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">Vérifier mes réponses</button>
+                    <div id="quiz-results" class="text-xl font-bold"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page 3: Recap Sheet -->
+        <div id="recap" class="page-content">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">Fiche Récapitulative SQL</h2>
+                        <button id="download-pdf" class="bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 flex items-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            <span>Télécharger en PDF</span>
+                        </button>
+                    </div>
+                    <div id="recap-content-display" class="prose max-w-none p-6 border rounded-lg bg-gray-50">
+                        <h3>Concepts Clés</h3>
+                        <ul>
+                            <li><strong>Base de Données Relationnelle :</strong> Une collection de tables liées entre elles.</li>
+                            <li><strong>Table :</strong> Un ensemble de données sur un sujet spécifique (ex: les clients).</li>
+                            <li><strong>Ligne (Row) :</strong> Un enregistrement unique dans une table (ex: un client).</li>
+                            <li><strong>Colonne :</strong> Un attribut ou une information spécifique pour chaque ligne (ex: l'email).</li>
+                            <li><strong>Clé Primaire (PK) :</strong> Un identifiant unique pour chaque ligne d'une table (ex: <code>ID_Client</code>).</li>
+                            <li><strong>Clé Étrangère (FK) :</strong> Une colonne qui fait référence à la clé primaire d'une autre table, créant un lien.</li>
+                        </ul>
+                        <h3>Commandes Essentielles</h3>
+                        <pre><code class="language-sql">-- Sélectionner des colonnes spécifiques d'une table
+SELECT colonne1, colonne2 FROM nom_table;
+
+-- Sélectionner toutes les colonnes
+SELECT * FROM nom_table;
+
+-- Filtrer les résultats avec une condition
+SELECT * FROM nom_table WHERE condition;
+-- Exemple: WHERE plateforme = 'Google Ads' OR cout > 500
+
+-- Trier les résultats
+SELECT * FROM nom_table ORDER BY colonne [ASC|DESC];
+-- ASC : ascendant (défaut), DESC : descendant
+
+-- Grouper les données et utiliser des fonctions d'agrégation
+SELECT colonne_groupe, SUM(colonne_valeur)
+FROM nom_table
+GROUP BY colonne_groupe;
+-- Fonctions communes: SUM(), AVG(), COUNT(), MIN(), MAX()
+
+-- Joindre deux tables sur une clé commune
+SELECT *
+FROM table1
+JOIN table2 ON table1.ID_commun = table2.ID_commun;</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- PAGE NAVIGATION LOGIC ---
+        const navLinks = document.querySelectorAll('.main-nav-link[data-page]');
+        const pages = document.querySelectorAll('.page-content');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.forEach(item => item.classList.remove('active'));
+                pages.forEach(item => item.classList.remove('active'));
+                link.classList.add('active');
+                document.getElementById(link.dataset.page).classList.add('active');
+            });
+        });
+
+        // --- DATABASE & SANDBOX LOGIC ---
+        const editor = CodeMirror.fromTextArea(document.getElementById('sql-editor'), {
+            mode: 'text/x-sql', theme: 'material-darker', lineNumbers: true, lineWrapping: true,
+        });
+
+        function generateData() {
+            const platforms = ['Google Ads', 'Meta Ads', 'TikTok Ads', 'LinkedIn Ads', 'Twitter Ads'];
+            const types = ['Search', 'Display', 'Video', 'Social', 'Lead Gen'];
+            const products = ['Produit A', 'Produit B', 'Service C', 'Abonnement D', 'Widget E'];
+            const campaigns = [];
+            const conversions = [];
+            let conversionId = 1;
+
+            for (let i = 1; i <= 50; i++) {
+                const platform = platforms[Math.floor(Math.random() * platforms.length)];
+                const cost = Math.floor(Math.random() * 2000) + 300;
+                const convCount = Math.floor(Math.random() * (cost / 10));
+
+                campaigns.push({
+                    ID_Campagne: i,
+                    Nom_Campagne: `Campagne ${i} - ${types[Math.floor(Math.random() * types.length)]}`,
+                    Plateforme: platform,
+                    Type_Campagne: types[Math.floor(Math.random() * types.length)],
+                    Cout_Total: cost,
+                    Conversions: convCount,
+                });
+
+                for (let j = 0; j < convCount; j++) {
+                    conversions.push({
+                        ID_Conversion: conversionId++,
+                        ID_Campagne: i,
+                        Produit_Vendu: products[Math.floor(Math.random() * products.length)],
+                        Revenu: Math.floor(Math.random() * 150) + 20,
+                    });
+                }
+            }
+            return { campaigns, conversions };
+        }
+
+        function setupDatabase() {
+            alasql('CREATE TABLE Campagnes_Marketing (ID_Campagne INT, Nom_Campagne STRING, Plateforme STRING, Type_Campagne STRING, Cout_Total INT, Conversions INT)');
+            alasql('CREATE TABLE Details_Conversions (ID_Conversion INT, ID_Campagne INT, Produit_Vendu STRING, Revenu INT)');
+            const data = generateData();
+            alasql.tables.Campagnes_Marketing.data = data.campaigns;
+            alasql.tables.Details_Conversions.data = data.conversions;
+        }
+
+        document.getElementById('execute-button').addEventListener('click', () => {
+            const sqlQuery = editor.getValue();
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.innerHTML = '';
+            try {
+                const results = alasql(sqlQuery);
+                if (typeof results === 'undefined' || results.length === 0) {
+                    resultsContainer.innerHTML = `<p class="text-gray-500">Requête exécutée avec succès. Aucune ligne retournée.</p>`;
+                    return;
+                }
+                resultsContainer.appendChild(createTableFromData(results));
+            } catch (e) {
+                resultsContainer.innerHTML = `<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert"><p class="font-bold">Erreur SQL</p><p>${e.message}</p></div>`;
+            }
+        });
+        
+        document.querySelectorAll('.example-query-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const queries = {
+                    'Voir les 10 premières campagnes': 'SELECT * FROM Campagnes_Marketing LIMIT 10;',
+                    'Calculer le coût total par plateforme': 'SELECT Plateforme, SUM(Cout_Total) AS Depense_Totale\nFROM Campagnes_Marketing\nGROUP BY Plateforme\nORDER BY Depense_Totale DESC;'
+                };
+                editor.setValue(queries[btn.textContent.trim()]);
+            });
+        });
+
+        function createTableFromData(data) {
+            const table = document.createElement('table');
+            table.className = 'w-full text-sm text-left';
+            const thead = document.createElement('thead');
+            thead.className = 'text-xs text-gray-700 uppercase bg-gray-100';
+            const headerRow = document.createElement('tr');
+            Object.keys(data[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.scope = 'col';
+                th.className = 'px-4 py-2';
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'bg-white border-b hover:bg-gray-50';
+                Object.values(row).forEach(val => {
+                    const td = document.createElement('td');
+                    td.className = 'px-4 py-2';
+                    td.textContent = val;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            return table;
+        }
+
+        // --- QUIZ LOGIC ---
+        const quizData = [
+            { q: "Quelle commande est utilisée pour sélectionner toutes les colonnes d'une table ?", a: ["GET *", "SELECT ALL", "SELECT *", "OPEN *"], correct: 2 },
+            { q: "Comment filtrer les résultats pour ne voir que les lignes où `Plateforme` est 'Meta Ads' ?", a: ["FILTER BY Plateforme = 'Meta Ads'", "WHERE Plateforme = 'Meta Ads'", "HAVING Plateforme = 'Meta Ads'", "IF Plateforme = 'Meta Ads'"], correct: 1 },
+            { q: "Quelle clause permet de trier les résultats par ordre décroissant ?", a: ["SORT BY ... DOWN", "ORDER BY ... DESC", "GROUP BY ... DESC", "ORDER BY ... DESCENDING"], correct: 1 },
+            { q: "La commande `SUM()` est un exemple de...", a: ["Fonction de tri", "Fonction de filtre", "Fonction d'agrégation", "Fonction de jointure"], correct: 2 },
+            { q: "Pour connecter deux tables, on utilise la commande...", a: ["CONNECT", "LINK", "MERGE", "JOIN"], correct: 3 },
+            { q: "Qu'est-ce qu'une Clé Primaire (Primary Key) ?", a: ["La colonne la plus importante", "Un identifiant unique pour chaque ligne", "Une colonne qui contient du texte", "La première colonne de la table"], correct: 1 },
+            { q: "La clause `GROUP BY` est presque toujours utilisée avec...", a: ["Une jointure", "Une fonction d'agrégation (SUM, COUNT...)", "Un filtre WHERE", "Un tri ORDER BY"], correct: 1 },
+            { q: "Quelle est la différence entre `WHERE` et `HAVING` ?", a: ["Aucune", "`WHERE` filtre avant le groupement, `HAVING` après", "`HAVING` est plus rapide", "`WHERE` est pour le texte, `HAVING` pour les chiffres"], correct: 1 },
+        ];
+        const quizForm = document.getElementById('quiz-form');
+        quizData.forEach((item, index) => {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = "p-4 border rounded-lg";
+            let optionsHtml = '';
+            item.a.forEach((option, i) => {
+                optionsHtml += `<div class="mt-2"><label class="flex items-center cursor-pointer"><input type="radio" name="q${index}" value="${i}" class="mr-3">${option}</label></div>`;
+            });
+            questionDiv.innerHTML = `<p class="font-semibold">${index + 1}. ${item.q}</p><div class="mt-2">${optionsHtml}</div><div id="feedback-q${index}" class="mt-3 text-sm font-semibold"></div>`;
+            quizForm.appendChild(questionDiv);
+        });
+
+        document.getElementById('submit-quiz').addEventListener('click', () => {
+            let score = 0;
+            quizData.forEach((item, index) => {
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                const feedback = document.getElementById(`feedback-q${index}`);
+                if (selected) {
+                    if (parseInt(selected.value) === item.correct) {
+                        score++;
+                        feedback.textContent = "✅ Correct !";
+                        feedback.className = "mt-3 text-sm font-semibold text-green-600";
+                    } else {
+                        feedback.textContent = `❌ Incorrect. La bonne réponse était : ${item.a[item.correct]}`;
+                         feedback.className = "mt-3 text-sm font-semibold text-red-600";
+                    }
+                } else {
+                    feedback.textContent = "Pas de réponse sélectionnée.";
+                    feedback.className = "mt-3 text-sm font-semibold text-gray-500";
+                }
+            });
+            document.getElementById('quiz-results').textContent = `Votre score : ${score} / ${quizData.length}`;
+        });
+
+        // --- PDF LOGIC (FIXED) ---
+        document.getElementById('download-pdf').addEventListener('click', () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+            
+            let y = 20;
+            const margin = 15;
+            const maxWidth = doc.internal.pageSize.getWidth() - margin * 2;
+
+            function addTitle(text) {
+                doc.setFont('Helvetica', 'bold');
+                doc.setFontSize(16);
+                doc.text(text, margin, y);
+                y += 10;
+                doc.setLineWidth(0.5);
+                doc.line(margin, y - 2, margin + maxWidth, y - 2);
+                y += 5;
+            }
+
+            function addSubTitle(text) {
+                doc.setFont('Helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.text(text, margin, y);
+                y += 8;
+            }
+
+            function addListItem(text) {
+                doc.setFont('Helvetica', 'normal');
+                doc.setFontSize(10);
+                const splitText = doc.splitTextToSize(`- ${text}`, maxWidth - 5);
+                doc.text(splitText, margin + 5, y);
+                y += (splitText.length * 5);
+            }
+            
+            function addCodeBlock(codeText) {
+                doc.setFont('Courier', 'normal');
+                doc.setFontSize(9);
+                doc.setFillColor(243, 244, 246); // bg-gray-100
+                const lines = codeText.split('\n');
+                const blockHeight = (lines.length * 4) + 4;
+                doc.rect(margin, y, maxWidth, blockHeight, 'F');
+                y += 4;
+                lines.forEach(line => {
+                    if (y > 280) { // Page break
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.text(line, margin + 3, y);
+                    y += 4;
+                });
+                y += 6;
+            }
+            
+            addTitle("Fiche Récapitulative SQL");
+
+            addSubTitle("Concepts Clés");
+            addListItem("Base de Données Relationnelle : Une collection de tables liées entre elles.");
+            addListItem("Table : Un ensemble de données sur un sujet spécifique (ex: les clients).");
+            addListItem("Ligne (Row) : Un enregistrement unique dans une table (ex: un client).");
+            addListItem("Colonne : Un attribut ou une information spécifique pour chaque ligne (ex: l'email).");
+            addListItem("Clé Primaire (PK) : Un identifiant unique pour chaque ligne d'une table.");
+            addListItem("Clé Étrangère (FK) : Une colonne qui fait référence à la clé primaire d'une autre table, créant un lien.");
+            y += 5;
+
+            addSubTitle("Commandes Essentielles");
+            const code = document.querySelector('#recap-content-display pre code').innerText;
+            addCodeBlock(code);
+
+            doc.save('recap-sql-debutant.pdf');
+        });
+        
+        // --- INITIALIZATION ---
+        setupDatabase();
+        editor.setValue('SELECT * FROM Campagnes_Marketing LIMIT 10;');
+
+    </script>
+</body>
+</html>
