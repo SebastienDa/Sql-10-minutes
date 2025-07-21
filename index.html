@@ -55,21 +55,21 @@
                             <div>
                                 <h3 class="font-semibold text-blue-700">Campagnes_Marketing</h3>
                                 <ul class="list-disc list-inside mt-2 text-gray-600 text-sm pl-2">
-                                    <li><strong>ID_Campagne</strong> (PK)</li>
-                                    <li><strong>Nom_Campagne</strong></li>
-                                    <li><strong>Plateforme</strong></li>
-                                    <li><strong>Type_Campagne</strong></li>
-                                    <li><strong>Cout_Total</strong></li>
-                                    <li><strong>Conversions</strong></li>
+                                    <li><strong>ID_Campagne</strong> (PK, INTEGER)</li>
+                                    <li><strong>Nom_Campagne</strong> (STRING)</li>
+                                    <li><strong>Plateforme</strong> (STRING)</li>
+                                    <li><strong>Type_Campagne</strong> (STRING)</li>
+                                    <li><strong>Cout_Total</strong> (INTEGER)</li>
+                                    <li><strong>Conversions</strong> (INTEGER)</li>
                                 </ul>
                             </div>
                             <div>
                                 <h3 class="font-semibold text-blue-700">Details_Conversions</h3>
                                 <ul class="list-disc list-inside mt-2 text-gray-600 text-sm pl-2">
-                                     <li><strong>ID_Conversion</strong> (PK)</li>
-                                     <li><strong>ID_Campagne</strong> (FK)</li>
-                                     <li><strong>Produit_Vendu</strong></li>
-                                     <li><strong>Revenu</strong></li>
+                                     <li><strong>ID_Conversion</strong> (PK, INTEGER)</li>
+                                     <li><strong>ID_Campagne</strong> (FK, INTEGER)</li>
+                                     <li><strong>Produit_Vendu</strong> (STRING)</li>
+                                     <li><strong>Revenu</strong> (INTEGER)</li>
                                 </ul>
                             </div>
                         </div>
